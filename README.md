@@ -71,6 +71,33 @@ Pass `--db /path/to/custom.db` if you'd like it somewhere else.
 | `list(limit?)`          | List memories, newest first. Default limit 20.                                                  |
 | `delete(id)`            | Remove a memory by id.                                                                          |
 
+## Getting claude to use it
+
+As the MCP server will be 'deferred' claude only gets to know the name of the tool, not what it does.  So adding something like this to your global ~/.claude/CLAUDE.md can help:
+
+```
+## User memories
+
+For cross-project lessons (working style, recurring preferences, things that apply regardless of project, interesting tidbit's about the user), use the user-memories MCP.
+The built-in auto-memory at ~/.claude/projects/<dir>/memory/ is project-scoped — reserve it for facts specific to one codebase.
+
+It offers :
+
+- `remember(content)` -- Store a new memory
+- `search(query, limit?)` -- Case insensitive search for memories
+- `list(limit?)` -- List memories, newest first
+- `delete(id)` -- Remove a memory
+
+Before calling remember, run a quick search for the topic — avoids writing a duplicate or a contradictory version of something already there.
+
+Also search when:
+- the user references prior context ("like last time", "as I mentioned", "remember that...")
+- you're about to make a judgement call about their preferences in an area you haven't discussed this session (e.g. attribution, testing style, PR sizing)
+
+Don't list at session start or search speculatively — the store will grow, and searching every turn is noise.
+
+```
+
 ## Running tests
 
 ```bash
