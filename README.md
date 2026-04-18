@@ -25,13 +25,28 @@ go install github.com/ohnotnow/user-memories@latest
 
 That drops the binary at `$(go env GOPATH)/bin/user-memories`, which is usually `~/go/bin/user-memories`.
 
-If you'd rather not build it yourself, there are prebuilt binaries on the [releases page](https://github.com/ohnotnow/user-memories/releases).
+### Use a prebuilt binary
+
+If you'd rather not build it yourself, grab one for your platform from the [releases page](https://github.com/ohnotnow/user-memories/releases). Binaries are named `user-memories-<os>-<arch>`, so pick the one that matches your machine.
+
+On macOS or Linux, make it executable and stash it somewhere on your PATH:
+
+```bash
+chmod +x user-memories-darwin-arm64
+mv user-memories-darwin-arm64 /usr/local/bin/user-memories
+```
+
+The macOS binary isn't signed, so Gatekeeper will block it the first time you try to run it. Right-click the file in Finder, choose Open, and it'll stop complaining from then on.
+
+On Windows, rename `user-memories-windows-amd64.exe` to something friendlier like `user-memories.exe` and drop it somewhere on your PATH.
 
 ### Register with Claude Code
 
 ```bash
 claude mcp add -s user user-memories ~/go/bin/user-memories
 ```
+
+Swap `~/go/bin/user-memories` for the actual path if you downloaded the binary instead.
 
 `-s user` registers it at user scope so every project gets it. Run `/mcp` inside Claude Code and you should see it listed with its four tools.
 
