@@ -6,7 +6,9 @@ A small MCP server that gives Claude a global, cross-project memory store, backe
 
 Claude's built-in memory is scoped to a single project. Anything you tell it in one repo doesn't follow you to the next, which gets a bit tedious when you keep re-explaining the same preferences. This MCP server bolts a second, global layer on top: one SQLite file (under your OS config directory by default) that any Claude session can read from and write to.
 
-It exposes four tools: `remember`, `search`, `list` and `delete`. Claude can use them to keep hold of things worth remembering across projects, like the fact that you write British English, or that you prefer `uv` over `pip`, or that you really don't want another apology when it makes a mistake.
+It exposes five tools: `remember`, `search`, `list`, `delete` and `dream`. Claude can use them to keep hold of things worth remembering across projects, like the fact that you write British English, or that you prefer `uv` over `pip`, or that you really don't want another apology when it makes a mistake.
+
+The same binary doubles as a regular CLI, so you can list, search, add or delete memories straight from your terminal without going through Claude.
 
 ## Prerequisites
 
@@ -48,7 +50,7 @@ claude mcp add -s user user-memories ~/go/bin/user-memories
 
 Swap `~/go/bin/user-memories` for the actual path if you downloaded the binary instead.
 
-`-s user` registers it at user scope so every project gets it. Run `/mcp` inside Claude Code and you should see it listed with its four tools.
+`-s user` registers it at user scope so every project gets it. Run `/mcp` inside Claude Code and you should see it listed with its five tools.
 
 ### Database location
 
@@ -70,6 +72,42 @@ Pass `--db /path/to/custom.db` if you'd like it somewhere else.
 | `search(query, limit?)` | Substring match against stored memories (case-insensitive for ASCII), newest first. Default limit 20. |
 | `list(limit?)`          | List memories, newest first. Default limit 20.                                                  |
 | `delete(id)`            | Remove a memory by id.                                                                          |
+| `dream()`               | Return housekeeping instructions for Claude to tidy up the memory store (see [Dream mode](#dream-mode)). |
+
+## CLI usage
+
+The same binary that serves MCP over stdio also runs as a regular command-line tool. With no subcommand it stays in MCP mode (so `claude mcp add` keeps working); add a subcommand and it'll act on the store directly:
+
+```bash
+user-memories list                        # newest 20
+user-memories list --limit 100
+user-memories search glasgow
+user-memories remember "uses British English spelling"
+echo "piped content works too" | user-memories remember
+user-memories delete 42
+user-memories dream                       # prints the dream-mode instructions
+user-memories help
+```
+
+All subcommands accept `--db PATH` if you want to point at a non-default store. `list` and `search` accept `--limit N`.
+
+## Dream mode
+
+Anthropic have been teasing a "dream" idea for Claude Code — pausing between sessions to look back over what's been stored and tidy it up. There's no new code needed for that here; it's really a prompt. The `dream` tool (MCP) and `user-memories dream` subcommand (CLI) both return a short set of instructions asking Claude to:
+
+1. `list` the whole store,
+2. look for duplicates, contradictions, stale entries, fragments that would be stronger as one memory, and things that really belong in a project-specific `CLAUDE.md`,
+3. propose a plan back to you before deleting or merging anything.
+
+From inside a Claude Code session you can kick it off with something like:
+
+> Run the user-memories `dream` tool and then follow the instructions it returns.
+
+Or from the terminal, if you'd rather pipe the prompt in yourself:
+
+```bash
+user-memories dream | pbcopy
+```
 
 ## Getting claude to use it
 
@@ -87,6 +125,7 @@ It offers :
 - `search(query, limit?)` -- Case insensitive search for memories
 - `list(limit?)` -- List memories, newest first
 - `delete(id)` -- Remove a memory
+- `dream()` -- Fetch housekeeping instructions for tidying the store
 
 Before calling remember, run a quick search for the topic — avoids writing a duplicate or a contradictory version of something already there.
 

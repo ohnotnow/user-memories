@@ -38,6 +38,12 @@ type DeleteOutput struct {
 	ID      int64 `json:"id"`
 }
 
+type DreamInput struct{}
+
+type DreamOutput struct {
+	Instructions string `json:"instructions"`
+}
+
 func registerTools(server *mcp.Server, store *Store) {
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "remember",
@@ -87,6 +93,13 @@ func registerTools(server *mcp.Server, store *Store) {
 			return textResult(fmt.Sprintf("No memory with id %d.", in.ID)), DeleteOutput{Deleted: false, ID: in.ID}, nil
 		}
 		return textResult(fmt.Sprintf("Deleted memory %d.", in.ID)), DeleteOutput{Deleted: true, ID: in.ID}, nil
+	})
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "dream",
+		Description: "Return the 'dream mode' instructions — a housekeeping pass over the stored memories. Call this and then follow the returned instructions to tidy up duplicates, contradictions, and stale entries.",
+	}, func(_ context.Context, _ *mcp.CallToolRequest, _ DreamInput) (*mcp.CallToolResult, DreamOutput, error) {
+		return textResult(dreamInstructions), DreamOutput{Instructions: dreamInstructions}, nil
 	})
 }
 
