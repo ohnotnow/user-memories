@@ -30,7 +30,7 @@ func main() {
 		// No subcommand (or explicit `mcp`) → run as an MCP stdio server.
 		// Keeps backward compatibility for `claude mcp add user-memories <path>`.
 		os.Exit(runMCP(rest))
-	case "list", "search", "index", "show", "remember", "delete", "dream":
+	case "list", "search", "index", "show", "remember", "delete", "dream", "session-start":
 		os.Exit(runCLI(cmd, rest))
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", cmd)
@@ -117,6 +117,7 @@ Usage:
   user-memories list [--db PATH] [--limit N] newest-first list
   user-memories search [--limit N] QUERY     all-words search, newest first
   user-memories index [--db PATH]            one-line gist of every memory
+  user-memories session-start [--db PATH]    the index framed for a fresh session (for a SessionStart hook)
   user-memories show ID                      print one memory in full
   user-memories remember CONTENT             store a new memory (or pipe via stdin)
   user-memories delete ID                    delete by id

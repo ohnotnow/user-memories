@@ -32,6 +32,8 @@ func runCLI(cmd string, args []string) int {
 		return cliSearch(ctx, store, args)
 	case "index":
 		return cliIndex(ctx, store)
+	case "session-start":
+		return cliSessionStart(ctx, store)
 	case "show":
 		return cliShow(ctx, store, args)
 	case "remember":
