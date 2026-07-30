@@ -35,14 +35,35 @@ func cliSessionStart(ctx context.Context, store *Store) int {
 	return 0
 }
 
+// sessionStartCharBudget keeps the whole output under Claude Code's 10,000-
+// character cap on SessionStart hook stdout — past that the harness diverts
+// the output to a file and the index never reaches the session's context.
+// The margin below 10,000 leaves room for the overflow note.
+const sessionStartCharBudget = 9500
+
 // printSessionStart writes the framed recce: the embedded preamble, then the
-// same index lines the `index` subcommand prints.
+// same index lines the `index` subcommand prints, trimmed (oldest first) to
+// stay inside sessionStartCharBudget. Trimmed entries fold into the existing
+// "older memories not shown — search reaches them" note.
 func printSessionStart(w io.Writer, entries []IndexEntry, total int) {
 	if len(entries) == 0 {
 		fmt.Fprint(w, sessionStartEmpty)
 		return
 	}
+	used := len(sessionStartPreamble) + 1 // +1 for the blank separator line
+	kept := 0
+	for _, e := range entries {
+		line := indexLine(e)
+		if used+len(line) > sessionStartCharBudget {
+			break
+		}
+		used += len(line)
+		kept++
+	}
+	if kept == 0 {
+		kept = 1 // a lone index line can't bust the budget; an empty index would lie
+	}
 	fmt.Fprint(w, sessionStartPreamble)
 	fmt.Fprintln(w)
-	printIndex(w, entries, total)
+	printIndex(w, entries[:kept], total)
 }

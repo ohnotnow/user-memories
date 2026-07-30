@@ -254,13 +254,17 @@ func printMemories(w io.Writer, memories []Memory) {
 	}
 }
 
+func indexLine(e IndexEntry) string {
+	return fmt.Sprintf("[%d] %s  (%s)\n", e.ID, e.Gist, e.CreatedAt)
+}
+
 func printIndex(w io.Writer, entries []IndexEntry, total int) {
 	if len(entries) == 0 {
 		fmt.Fprintln(w, "No memories yet.")
 		return
 	}
 	for _, e := range entries {
-		fmt.Fprintf(w, "[%d] %s  (%s)\n", e.ID, e.Gist, e.CreatedAt)
+		fmt.Fprint(w, indexLine(e))
 	}
 	if total > len(entries) {
 		fmt.Fprintf(w, "%d older memories not shown — search reaches them.\n", total-len(entries))

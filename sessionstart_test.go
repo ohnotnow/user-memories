@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -68,5 +69,31 @@ func TestSessionStartKeepsOverflowNote(t *testing.T) {
 	printSessionStart(&buf, buildIndex(memories), 250)
 	if !strings.Contains(buf.String(), "older memories not shown") {
 		t.Errorf("expected overflow note, got %q", buf.String())
+	}
+}
+
+func TestSessionStartStaysUnderHookStdoutCap(t *testing.T) {
+	// Claude Code caps a SessionStart hook's stdout at 10,000 characters —
+	// build an index big enough to bust that and check the trim holds.
+	entries := make([]IndexEntry, 120)
+	for i := range entries {
+		entries[i] = IndexEntry{
+			ID:        int64(i + 1),
+			CreatedAt: "2026-01-01 00:00:00",
+			Gist:      fmt.Sprintf("Synthetic filler lesson %03d — %s", i+1, strings.Repeat("pad ", 25)),
+		}
+	}
+
+	var buf bytes.Buffer
+	printSessionStart(&buf, entries, len(entries))
+	out := buf.String()
+	if len(out) > 10000 {
+		t.Errorf("output is %d chars, want <= 10000", len(out))
+	}
+	if !strings.Contains(out, "Synthetic filler lesson 001") {
+		t.Errorf("newest entry should survive the trim: %q", out[:200])
+	}
+	if !strings.Contains(out, "older memories not shown") {
+		t.Errorf("expected overflow note after trim, got %q", out)
 	}
 }
