@@ -87,6 +87,7 @@ user-memories list --limit 100
 user-memories search glasgow
 user-memories search moat gitlab          # all words must appear, any order
 user-memories index                       # one line per memory, whole store
+user-memories session-start               # the index framed for a fresh session (see Session-start hook)
 user-memories show 42                     # one memory in full
 user-memories remember "uses British English spelling"
 echo "piped content works too" | user-memories remember
@@ -104,6 +105,36 @@ The store is pull-based: memories only surface when Claude decides to read them.
 `index()` returns one line per memory across the whole store — `id`, date, and a gist (the memory's first line, truncated to ~120 characters, counted in runes so it never mangles emoji or accents). At roughly 2–3k tokens for 100 memories it's cheap enough to call once per session: skim the gists, then `get()` or `search()` for the full text of anything relevant to the day's work. Above ~200 memories `index()` returns the newest 200 and notes how many older ones are only a `search()` away.
 
 The server ships this workflow to clients through the MCP `instructions` field, so harnesses that surface server instructions (Claude Code does) pick it up automatically. For anything that doesn't, the block in [Getting claude to use it](#getting-claude-to-use-it) puts the same guidance in your own instructions file. It also pays to write memories gist-first — a one-sentence opening line — since that first line is all `index()` shows.
+
+## Session-start hook
+
+Everything above still depends on Claude *choosing* to look, and in practice that's a coin-toss weighted the wrong way — "call `index()` first" is exactly the kind of instruction that loses out to whatever you actually asked for. A [Claude Code SessionStart hook](https://code.claude.com/docs/en/hooks) takes the choice away: the harness runs a command when a session starts and adds its stdout to Claude's context before the first prompt. That's deterministic for you (your preferences are in view before Claude's first reply, in every project, without re-explaining) and for future Claude (the index is simply there, the way `CLAUDE.md` is simply there).
+
+The `session-start` subcommand exists to be that command. It prints the same one-line-per-memory index as `index`, framed by a short preamble telling a cold model what the store is and which habits matter: `get()` the entries relevant to today's work, `search()` before judgement calls about your preferences, `search()` before `remember()`. When the store is empty it prints one quiet line instead of ceremony wrapped around nothing. And it keeps itself under Claude Code's 10,000-character cap on hook stdout (past which output is diverted to a file and never reaches context), trimming oldest-first into the same "older memories not shown — search reaches them" note that `index` uses.
+
+Wire it up in `~/.claude/settings.json` (user scope, so every project gets it):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/absolute/path/to/user-memories session-start"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Use the binary's absolute path — hooks don't reliably inherit your login shell's `PATH`. The matcher above fires on new sessions, resumed ones, and `/clear`; omit the `matcher` field entirely and it also fires after compaction and on forked sessions. If you run the sibling [claude-memories](https://github.com/ohnotnow/claude-memories) too, give it its own entry in the same `hooks` array — each store frames its own index.
+
+The cost is the index itself landing in every session — roughly 2–3k tokens per 100 memories, needed or not. That's the price of never re-explaining yourself; if it stings, [dream mode](#dream-mode) keeps the store lean. You can also run the same command by hand mid-session: type `! user-memories session-start` at the prompt and the output lands straight in context.
 
 ## Dream mode
 
@@ -125,7 +156,7 @@ user-memories dream | pbcopy
 
 ## Getting claude to use it
 
-The server advertises this workflow itself through the MCP `instructions` field, which Claude Code folds into the session automatically. But the tools are 'deferred' (Claude sees only a tool's name until it looks closer), and not every harness surfaces server instructions — so it's worth putting the workflow in your global `~/.claude/CLAUDE.md` too:
+The server advertises this workflow itself through the MCP `instructions` field, which Claude Code folds into the session automatically. But the tools are 'deferred' (Claude sees only a tool's name until it looks closer), and not every harness surfaces server instructions — so it's worth putting the workflow in your global `~/.claude/CLAUDE.md` too. (With the [SessionStart hook](#session-start-hook) wired up, the recce itself already happens mechanically — the block below then mostly earns its keep through the mid-session habits.)
 
 ```
 ## User memories
