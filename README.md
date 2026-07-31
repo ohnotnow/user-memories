@@ -1,5 +1,8 @@
 # user-memories
 
+> [!IMPORTANT]
+> **This project has merged into [claude-memories](https://github.com/ohnotnow/claude-memories).** One binary now fronts both stores — register it with `--store user` to get exactly what this project provided, and run `claude-memories migrate` to carry your existing database across (ids and timestamps intact; your old file is left untouched). This repo stays up for history but won't see new features — everything below describes the final standalone version.
+
 A small MCP server that gives Claude a global, cross-project memory store, backed by SQLite. It records what Claude learns about *you*; its sibling [claude-memories](https://github.com/ohnotnow/claude-memories) does the same job for what Claude learns about *itself*.
 
 ## What it does
