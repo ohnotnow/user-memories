@@ -20,6 +20,12 @@ var sessionStartPreamble string
 // one quiet line instead of ceremony wrapped around an empty index.
 const sessionStartEmpty = "The user-memories store is empty — nothing recorded about this user yet. When a durable preference or working-style fact surfaces this session, store it with the user-memories MCP remember() tool.\n"
 
+// sessionStartDreamNudge closes the loop when the index no longer fits the
+// recce: Claude suggests a dream session, the store consolidates, and the
+// index fits again. Timing is spelled out so a cold model doesn't open the
+// session by nagging.
+const sessionStartDreamNudge = "This store has outgrown the session-start recce. At a natural stop-point — not mid-task — suggest the user runs a dream session to consolidate it.\n"
+
 func cliSessionStart(ctx context.Context, store *Store) int {
 	memories, err := store.List(ctx, indexCap)
 	if err != nil {
@@ -66,4 +72,7 @@ func printSessionStart(w io.Writer, entries []IndexEntry, total int) {
 	fmt.Fprint(w, sessionStartPreamble)
 	fmt.Fprintln(w)
 	printIndex(w, entries[:kept], total)
+	if total > kept {
+		fmt.Fprint(w, sessionStartDreamNudge)
+	}
 }

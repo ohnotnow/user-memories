@@ -52,6 +52,9 @@ func TestSessionStartShowsPreambleThenIndex(t *testing.T) {
 	if !strings.Contains(out, "search") {
 		t.Errorf("preamble should mention the search habit: %q", out)
 	}
+	if strings.Contains(out, "dream session") {
+		t.Errorf("dream nudge should not appear when nothing was trimmed: %q", out)
+	}
 }
 
 func TestSessionStartKeepsOverflowNote(t *testing.T) {
@@ -69,6 +72,9 @@ func TestSessionStartKeepsOverflowNote(t *testing.T) {
 	printSessionStart(&buf, buildIndex(memories), 250)
 	if !strings.Contains(buf.String(), "older memories not shown") {
 		t.Errorf("expected overflow note, got %q", buf.String())
+	}
+	if !strings.Contains(buf.String(), "dream session") {
+		t.Errorf("expected dream nudge when memories were trimmed, got %q", buf.String())
 	}
 }
 
@@ -95,5 +101,8 @@ func TestSessionStartStaysUnderHookStdoutCap(t *testing.T) {
 	}
 	if !strings.Contains(out, "older memories not shown") {
 		t.Errorf("expected overflow note after trim, got %q", out)
+	}
+	if !strings.Contains(out, "dream session") {
+		t.Errorf("expected dream nudge after trim, got %q", out)
 	}
 }
